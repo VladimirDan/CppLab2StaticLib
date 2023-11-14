@@ -1,33 +1,30 @@
-
 CXX = g++
-
-CXXFLAGS = -std=c++11 -Wall
+CXXFLAGS = -Wall -g
+LIBS = -lsqlite3
 
 SRCDIR = .
+INCDIR = .
+BUILDDIR = build
+BINDIR = bin
 
-OBJDIR = .
+TARGET = $(BINDIR)/my_program
+SOURCES = $(wildcard $(SRCDIR)/*.cpp)
+OBJECTS = $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(SOURCES))
+DEPS = $(OBJECTS:.o=.d)
 
-SOURCES = $(SRCDIR)/main.cpp $(SRCDIR)/Employee.cpp $(SRCDIR)/Database.cpp
-HEADERS = $(SRCDIR)/Employee.h $(SRCDIR)/Database.h
+.PHONY: all clean
 
-OBJECTS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
+all: $(TARGET)
 
-EXECUTABLE = my_program
+$(TARGET): $(OBJECTS)
+	@mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEADERS)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
-$(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJECTS)
+$(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
+	@mkdir -p $(BUILDDIR)
+	$(CXX) $(CXXFLAGS) -I$(INCDIR) -MMD -MP -c $< -o $@
 
 clean:
-	rm -f $(OBJDIR)/*.o $(EXECUTABLE)
+	rm -rf $(BUILDDIR) $(BINDIR)
 
-run: $(EXECUTABLE)
-	./$(EXECUTABLE)
-
-all: $(EXECUTABLE)
-
-$(shell mkdir -p $(OBJDIR))
-
-.PHONY: clean run all
+-include $(DEPS)
